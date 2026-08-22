@@ -11,14 +11,19 @@ dentro de las cajas que tú (o la plantilla guardada) ya definieron.
 """
 
 import io
+import os
 import numpy as np
 import flyr
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from anthropic import Anthropic
 
 app = Flask(__name__)
 # En producción, reemplaza "*" por el dominio real de tu app (ej. tu URL de Vercel)
 CORS(app, resources={r"/*": {"origins": "*"}})
+
+anthropic_client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+REPORT_MODEL = "claude-sonnet-5"
 
 
 @app.route("/health", methods=["GET"])
@@ -90,6 +95,162 @@ def extract():
         )
 
     return jsonify({"width": int(width), "height": int(height), "results": results})
+
+
+# ============================================================
+# Generación de informes con IA — análisis interpretativo por
+# módulo, y planes de intervención/entrenamiento. El objetivo:
+# que el profesional (CT, PF, médico, fisioterapeuta) vea la
+# INTERPRETACIÓN, no los números crudos.
+# ============================================================
+
+MODULE_EVIDENCE = {
+    "jump": """
+Eres un especialista en ciencias del deporte interpretando datos de ForceDecks (CMJ y Drop Jump).
+Base de evidencia a aplicar:
+- Altura de salto CMJ: una caída sostenida >10% respecto a la línea base individual del atleta
+  se asocia con fatiga neuromuscular acumulada o riesgo de sobreentrenamiento (Gathercole et al., 2015).
+- RSI-modified (CMJ) y RSI (DJ): reflejan capacidad reactiva/pliométrica; caídas abruptas sin cambio
+  de altura sugieren alteración en la estrategia de aterrizaje-despegue, relevante para riesgo de
+  lesión de rodilla/tobillo.
+- Asimetría de impulso concéntrico y de fuerza de aterrizaje: >10-15% de asimetría interextremidad
+  se asocia con mayor riesgo de lesión, especialmente de LCA y isquiotibiales (Bishop et al., 2018;
+  Paterno et al., 2010).
+- Contexto clínico (Normal / Readaptación-Lesión): una caída de rendimiento en un atleta marcado
+  como en readaptación NO debe interpretarse como alarma de lesión nueva, sino como parte esperada
+  del proceso — la interpretación debe ajustarse a ese contexto.
+""",
+    "hrv": """
+Eres un especialista en ciencias del deporte interpretando datos de variabilidad de la frecuencia
+cardíaca (HRV, medidos con Polar H10 / Kubios).
+Base de evidencia a aplicar:
+- rMSSD: marcador del tono parasimpático; caídas sostenidas (varios días) respecto a la media móvil
+  individual del atleta indican estrés fisiológico acumulado, mala recuperación, o riesgo de
+  sobreentrenamiento (Plews et al., 2013; Buchheit, 2014).
+- El valor absoluto de rMSSD varía mucho entre individuos — SIEMPRE interpretar respecto a la
+  línea base propia del atleta, nunca contra un valor poblacional genérico.
+- El índice de Readiness (Kubios) combina rMSSD con otros parámetros; una caída de Readiness sin
+  caída proporcional de rMSSD puede reflejar estrés no fisiológico (sueño, estrés psicológico, carga
+  externa) y amerita indagar contexto, no solo carga de entrenamiento.
+""",
+    "gps": """
+Eres un especialista en ciencias del deporte interpretando datos de carga externa GPS (Catapult).
+Base de evidencia a aplicar:
+- Distancia total y distancia a alta velocidad (HSR): picos agudos de carga muy por encima de la
+  carga crónica (ratio agudo:crónico >1.5) se asocian con mayor riesgo de lesión de tejido blando
+  (Gabbett, 2016).
+- Caídas abruptas de velocidad máxima o de distancia HSR respecto al patrón habitual del atleta
+  pueden reflejar fatiga, dolor no reportado, o riesgo de lesión muscular incipiente.
+""",
+    "force": """
+Eres un especialista en ciencias del deporte interpretando datos de fuerza (dinamometría).
+Base de evidencia a aplicar:
+- Asimetrías de fuerza entre extremidades >10-15% son un marcador de riesgo de lesión bien
+  establecido, particularmente en tren inferior (Bishop et al., 2018).
+- La tasa de desarrollo de fuerza (RFD) es sensible a fatiga neuromuscular incluso cuando la fuerza
+  pico se mantiene — vale la pena señalar si RFD cae más que la fuerza máxima.
+""",
+    "thermal": """
+Eres un especialista interpretando termografía infrarroja bilateral en deportistas.
+Base de evidencia a aplicar (con cautela — esta es la modalidad con MENOS evidencia sólida de las
+que maneja este sistema, y debes comunicarlo así, nunca como diagnóstico):
+- Asimetrías térmicas bilaterales >0.5-1°C en tejido blando pueden reflejar procesos inflamatorios
+  o vasculares locales, pero tienen alta tasa de falsos positivos (variables ambientales, actividad
+  reciente, hidratación de la piel) — se usa como screening, NUNCA como diagnóstico aislado.
+- Una asimetría térmica sostenida en la MISMA zona a través de varias sesiones es más relevante
+  clínicamente que un hallazgo aislado en una sola sesión.
+""",
+    "overall": """
+Eres el especialista que integra TODOS los módulos (ForceDecks, HRV, GPS, Dinamometría, Termografía)
+en una lectura única del estado del atleta. Tu trabajo es encontrar coherencia o discrepancia entre
+señales de distintos sistemas (ej. caída de CMJ + caída de HRV + asimetría térmica en la misma
+extremidad = señal convergente de mayor peso que cualquiera de las tres por separado).
+""",
+}
+
+REPORT_SYSTEM_PROMPT = """Eres un asistente clínico-deportivo que redacta informes para un equipo
+profesional (cuerpo técnico, preparador físico, médico deportivo, fisioterapeuta) dentro de VIXTA,
+una plataforma de monitoreo de rendimiento y riesgo de lesión.
+
+Reglas estrictas:
+1. El profesional que lee esto NO quiere ver los números otra vez — ya los tiene en pantalla. Quiere
+   la INTERPRETACIÓN: qué significa, por qué importa, y qué tan urgente es.
+2. Cada afirmación relevante debe tener una base en evidencia científica (ya te doy la evidencia
+   aplicable abajo) — nunca inventes un umbral o cifra que no te haya dado.
+3. Nunca uses la palabra "diagnóstico" — esto es monitoreo y screening, no diagnóstico clínico.
+   Si algo amerita evaluación médica, dilo explícitamente ("se recomienda valoración médica"),
+   pero no diagnostiques tú.
+4. Tono: profesional, directo, sin relleno. Un profesional ocupado debe poder leer esto en 30-45
+   segundos y saber qué hacer.
+5. Responde en español, sin encabezados markdown tipo "##" — usa párrafos cortos y, si ayuda,
+   una lista breve al final con las acciones recomendadas.
+6. Si los datos no alcanzan para una conclusión firme, dilo — no rellenes con generalidades vagas.
+"""
+
+
+def call_claude_report(system_extra, user_prompt):
+    message = anthropic_client.messages.create(
+        model=REPORT_MODEL,
+        max_tokens=1200,
+        system=REPORT_SYSTEM_PROMPT + "\n\n" + system_extra,
+        messages=[{"role": "user", "content": user_prompt}],
+    )
+    return "".join(block.text for block in message.content if block.type == "text")
+
+
+@app.route("/report", methods=["POST"])
+def report():
+    """
+    Espera JSON:
+      {
+        "reportType": "module_analysis" | "intervention_plan",
+        "module": "jump" | "hrv" | "gps" | "force" | "thermal" | "overall",
+        "athleteName": "Nombre del atleta",
+        "data": { ...datos ya calculados en el frontend, específicos del módulo... }
+      }
+
+    Devuelve: { "text": "..." }
+    """
+    body = request.get_json(silent=True) or {}
+    report_type = body.get("reportType")
+    module = body.get("module")
+    athlete_name = body.get("athleteName", "el atleta")
+    data = body.get("data", {})
+
+    if report_type not in ("module_analysis", "intervention_plan"):
+        return jsonify({"error": "reportType debe ser 'module_analysis' o 'intervention_plan'"}), 400
+    if module not in MODULE_EVIDENCE:
+        return jsonify({"error": f"módulo no reconocido: {module}"}), 400
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        return jsonify({"error": "Falta configurar ANTHROPIC_API_KEY en el servidor"}), 500
+
+    evidence = MODULE_EVIDENCE[module]
+
+    if report_type == "module_analysis":
+        user_prompt = (
+            f"Atleta: {athlete_name}\n"
+            f"Módulo: {module}\n"
+            f"Datos calculados (JSON):\n{data}\n\n"
+            "Redacta el informe interpretativo de este módulo para el equipo profesional, siguiendo "
+            "las reglas del sistema. 3-5 párrafos cortos como máximo."
+        )
+    else:
+        user_prompt = (
+            f"Atleta: {athlete_name}\n"
+            f"Módulo o vista: {module}\n"
+            f"Datos calculados (JSON):\n{data}\n\n"
+            "Basándote en estos hallazgos, redacta un plan de intervención/entrenamiento concreto y "
+            "accionable: qué ajustar en la carga de entrenamiento, qué trabajar en readaptación o "
+            "prevención, con qué frecuencia volver a monitorear, y si amerita derivar a valoración "
+            "médica. Cierra con una lista breve de 3-6 acciones concretas, priorizadas."
+        )
+
+    try:
+        text = call_claude_report(evidence, user_prompt)
+    except Exception as e:
+        return jsonify({"error": f"No se pudo generar el informe: {e}"}), 502
+
+    return jsonify({"text": text})
 
 
 if __name__ == "__main__":
