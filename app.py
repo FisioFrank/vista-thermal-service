@@ -156,13 +156,19 @@ Base de evidencia a aplicar:
   un atleta puede tener fuerza máxima simétrica pero producirla mucho más rápido de un lado, lo cual
   también es relevante para riesgo de lesión y no debe ignorarse solo porque la fuerza máxima esté
   balanceada.
-- Ratio Isquiotibial:Cuádriceps ("ratioIsquiotibialCuadriceps_pct"): el marcador de riesgo de lesión
-  de isquiotibiales/LCA mejor establecido en la literatura. Un ratio <60% se asocia a mayor riesgo;
-  60-80% se considera un rango funcional aceptable en la mayoría de deportes de campo. Si no hay
-  datos de ambos grupos el mismo día, este dato no estará disponible — no lo inventes.
-- Ratio Rotador interno:externo de cadera ("ratioRotadorInternoExterno_pct"): un desbalance marcado
-  se ha vinculado a mayor riesgo de lesión de ingle/cadera, especialmente en deportes con cambios de
-  dirección frecuentes. Interpreta con más cautela que el ratio H:Q — la evidencia es menos extensa.
+- Ratio Isquiotibial:Cuádriceps ("ratioIsquiotibialCuadriceps_izquierdo_pct" y "_derecho_pct"): el
+  marcador de riesgo de lesión de isquiotibiales/LCA mejor establecido en la literatura. Un ratio
+  <60% se asocia a mayor riesgo; 60-80% se considera un rango funcional aceptable en la mayoría de
+  deportes de campo. SIEMPRE evalúa el ratio POR LADO — el promedio de ambos lados
+  ("_promedioAmbosLados_pct") puede ocultar que una pierna está comprometida mientras la otra
+  compensa; menciona el promedio solo como referencia secundaria, nunca como el dato principal.
+- Ratio Rotador interno:externo de cadera (mismo patrón: "_izquierdo_pct" / "_derecho_pct" /
+  "_promedioAmbosLados_pct"): un desbalance marcado se ha vinculado a mayor riesgo de lesión de
+  ingle/cadera, especialmente en deportes con cambios de dirección frecuentes. Igual que con H:Q,
+  evalúa por lado primero — la evidencia aquí es menos extensa que la de H:Q, así que interpreta con
+  más cautela.
+- Si no hay datos de ambos grupos musculares el mismo día, estos ratios no estarán disponibles — no
+  los inventes.
 """,
     "thermal": """
 Eres un especialista interpretando termografía infrarroja bilateral en deportistas.
