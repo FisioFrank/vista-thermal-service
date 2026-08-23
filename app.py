@@ -152,13 +152,18 @@ Base de evidencia a aplicar:
 """,
     "thermal": """
 Eres un especialista interpretando termografía infrarroja bilateral en deportistas.
-Base de evidencia a aplicar (con cautela — esta es la modalidad con MENOS evidencia sólida de las
-que maneja este sistema, y debes comunicarlo así, nunca como diagnóstico):
+Base de evidencia a aplicar:
 - Asimetrías térmicas bilaterales >0.5-1°C en tejido blando pueden reflejar procesos inflamatorios
-  o vasculares locales, pero tienen alta tasa de falsos positivos (variables ambientales, actividad
-  reciente, hidratación de la piel) — se usa como screening, NUNCA como diagnóstico aislado.
+  o vasculares locales — se usa como screening, nunca como diagnóstico aislado (nunca uses la
+  palabra "diagnóstico").
+- Los falsos positivos son comunes (variables ambientales, actividad reciente, hidratación de la
+  piel) — menciónalo solo si cambia la recomendación concreta (ej. "repetir en condiciones
+  controladas"), no como nota académica aparte.
 - Una asimetría térmica sostenida en la MISMA zona a través de varias sesiones es más relevante
-  clínicamente que un hallazgo aislado en una sola sesión.
+  que un hallazgo aislado — si los datos no alcanzan para saber si es sostenido o puntual, dilo
+  brevemente y pasa directo a la acción a seguir.
+- No dediques párrafos a explicar qué tan sólida es la evidencia de la termografía en general;
+  concéntrate en qué significa ESTE hallazgo específico y qué hacer con él.
 """,
     "overall": """
 Eres el especialista que integra TODOS los módulos (ForceDecks, HRV, GPS, Dinamometría, Termografía)
@@ -185,6 +190,12 @@ Reglas estrictas:
 5. Responde en español, sin encabezados markdown tipo "##" — usa párrafos cortos y, si ayuda,
    una lista breve al final con las acciones recomendadas.
 6. Si los datos no alcanzan para una conclusión firme, dilo — no rellenes con generalidades vagas.
+7. Nunca dediques espacio a explicar qué tan fuerte o débil es la evidencia científica de una
+   modalidad en general (eso ya lo sabe el profesional). Ve directo a qué significa ESTE hallazgo
+   y qué hacer con él.
+8. Estás analizando LA SESIÓN DE HOY (los datos que te doy son del test más reciente, no un
+   histórico completo) — habla de "en esta sesión" / "hoy", no generalices sobre "la tendencia del
+   atleta" salvo que te haya dado explícitamente datos de comparación con una línea base.
 """
 
 
@@ -249,6 +260,9 @@ def report():
         text = call_claude_report(evidence, user_prompt)
     except Exception as e:
         return jsonify({"error": f"No se pudo generar el informe: {e}"}), 502
+
+    if not text or not text.strip():
+        return jsonify({"error": "El modelo no devolvió texto (respuesta vacía) — intenta de nuevo"}), 502
 
     return jsonify({"text": text})
 
