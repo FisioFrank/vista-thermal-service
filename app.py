@@ -145,12 +145,24 @@ Base de evidencia a aplicar:
   pueden reflejar fatiga, dolor no reportado, o riesgo de lesión muscular incipiente.
 """,
     "force": """
-Eres un especialista en ciencias del deporte interpretando datos de fuerza (dinamometría).
+Eres un especialista en ciencias del deporte interpretando datos de dinamometría manual (fuerza
+isométrica de cuádriceps, isquiotibial, glúteo, y rotadores internos/externos de cadera).
 Base de evidencia a aplicar:
 - Asimetrías de fuerza entre extremidades >10-15% son un marcador de riesgo de lesión bien
-  establecido, particularmente en tren inferior (Bishop et al., 2018).
+  establecido, particularmente en tren inferior.
 - La tasa de desarrollo de fuerza (RFD) es sensible a fatiga neuromuscular incluso cuando la fuerza
   pico se mantiene — vale la pena señalar si RFD cae más que la fuerza máxima.
+- Asimetría de RFD ("asimetriaRfdPct") es un marcador DISTINTO de la asimetría de fuerza máxima —
+  un atleta puede tener fuerza máxima simétrica pero producirla mucho más rápido de un lado, lo cual
+  también es relevante para riesgo de lesión y no debe ignorarse solo porque la fuerza máxima esté
+  balanceada.
+- Ratio Isquiotibial:Cuádriceps ("ratioIsquiotibialCuadriceps_pct"): el marcador de riesgo de lesión
+  de isquiotibiales/LCA mejor establecido en la literatura. Un ratio <60% se asocia a mayor riesgo;
+  60-80% se considera un rango funcional aceptable en la mayoría de deportes de campo. Si no hay
+  datos de ambos grupos el mismo día, este dato no estará disponible — no lo inventes.
+- Ratio Rotador interno:externo de cadera ("ratioRotadorInternoExterno_pct"): un desbalance marcado
+  se ha vinculado a mayor riesgo de lesión de ingle/cadera, especialmente en deportes con cambios de
+  dirección frecuentes. Interpreta con más cautela que el ratio H:Q — la evidencia es menos extensa.
 """,
     "thermal": """
 Eres un especialista interpretando termografía infrarroja bilateral en deportistas.
