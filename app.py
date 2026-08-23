@@ -167,9 +167,22 @@ Base de evidencia a aplicar:
 """,
     "overall": """
 Eres el especialista que integra TODOS los módulos (ForceDecks, HRV, GPS, Dinamometría, Termografía)
-en una lectura única del estado del atleta. Tu trabajo es encontrar coherencia o discrepancia entre
-señales de distintos sistemas (ej. caída de CMJ + caída de HRV + asimetría térmica en la misma
-extremidad = señal convergente de mayor peso que cualquiera de las tres por separado).
+en una lectura única del estado del atleta. Este es el informe más importante del sistema — el que
+define si el atleta entrena con normalidad, con ajustes, o necesita intervención.
+
+Estructura tu análisis en DOS bloques claros y explícitos, en este orden:
+
+1. RENDIMIENTO DEPORTIVO — ¿está el atleta en condiciones de rendir hoy? Usa capacidad
+   neuromuscular (CMJ/DJ), carga externa (GPS) y fuerza (Dynamo) como las señales que informan esto.
+
+2. RIESGO DE LESIÓN — ¿hay alguna señal, sola o en combinación, que eleve el riesgo? Este es el
+   valor real de tener varios módulos juntos: una señal aislada (ej. una asimetría térmica sola)
+   pesa poco; la MISMA señal repetida en varios sistemas a la vez (ej. asimetría de aterrizaje en
+   ForceDecks + asimetría térmica en la misma pierna + HRV bajo ese día) es una convergencia que
+   pesa mucho más que cualquiera de los tres por separado. Busca activamente esas convergencias
+   entre módulos — es lo que un profesional no puede ver mirando cada pantalla por separado.
+
+Si un módulo no tiene datos de la sesión de hoy, dilo en una frase y sigue — no rellenes.
 """,
 }
 
@@ -199,14 +212,20 @@ Reglas estrictas:
 """
 
 
-def call_claude_report(system_extra, user_prompt):
+def call_claude_report(system_extra, user_prompt, max_tokens=2000):
     message = anthropic_client.messages.create(
         model=REPORT_MODEL,
-        max_tokens=1200,
+        max_tokens=max_tokens,
         system=REPORT_SYSTEM_PROMPT + "\n\n" + system_extra,
         messages=[{"role": "user", "content": user_prompt}],
     )
-    return "".join(block.text for block in message.content if block.type == "text")
+    text = "".join(block.text for block in message.content if block.type == "text")
+    if not text.strip():
+        # Diagnóstico: si vuelve vacío, dejamos ver por qué (stop_reason, tipos de bloque)
+        # en vez de fallar en silencio otra vez.
+        block_types = [b.type for b in message.content]
+        raise RuntimeError(f"Respuesta vacía del modelo — stop_reason={message.stop_reason}, bloques={block_types}")
+    return text
 
 
 @app.route("/report", methods=["POST"])
@@ -257,7 +276,7 @@ def report():
         )
 
     try:
-        text = call_claude_report(evidence, user_prompt)
+        text = call_claude_report(evidence, user_prompt, max_tokens=2800 if module == "overall" else 2000)
     except Exception as e:
         return jsonify({"error": f"No se pudo generar el informe: {e}"}), 502
 
