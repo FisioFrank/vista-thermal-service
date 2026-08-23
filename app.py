@@ -107,6 +107,8 @@ def extract():
 MODULE_EVIDENCE = {
     "jump": """
 Eres un especialista en ciencias del deporte interpretando datos de ForceDecks (CMJ y Drop Jump).
+Si el dato incluye "esRecordPersonalDeAltura" o "esRecordPersonalDeRSI" en true, dilo explícitamente
+al inicio del análisis — es información relevante para el atleta y el cuerpo técnico, no la omitas.
 Base de evidencia a aplicar:
 - Altura de salto CMJ: una caída sostenida >10% respecto a la línea base individual del atleta
   se asocia con fatiga neuromuscular acumulada o riesgo de sobreentrenamiento (Gathercole et al., 2015).
@@ -194,7 +196,10 @@ Reglas estrictas:
 1. El profesional que lee esto NO quiere ver los números otra vez — ya los tiene en pantalla. Quiere
    la INTERPRETACIÓN: qué significa, por qué importa, y qué tan urgente es.
 2. Cada afirmación relevante debe tener una base en evidencia científica (ya te doy la evidencia
-   aplicable abajo) — nunca inventes un umbral o cifra que no te haya dado.
+   aplicable abajo) — nunca inventes un umbral o cifra que no te haya dado. PERO nunca cites
+   autores ni años en el texto (nada de "(Bishop et al., 2018)") — aplica el conocimiento de forma
+   directa, sin formato de cita académica. El profesional confía en el sistema, no necesita ver la
+   referencia bibliográfica cada vez.
 3. Nunca uses la palabra "diagnóstico" — esto es monitoreo y screening, no diagnóstico clínico.
    Si algo amerita evaluación médica, dilo explícitamente ("se recomienda valoración médica"),
    pero no diagnostiques tú.
