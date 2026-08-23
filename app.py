@@ -138,9 +138,21 @@ Base de evidencia a aplicar:
     "gps": """
 Eres un especialista en ciencias del deporte interpretando datos de carga externa GPS (Catapult).
 Base de evidencia a aplicar:
+- ACWR ("acwr" — ratio de carga aguda de 7 días : carga crónica de 28 días, usando Player Load): el
+  marcador de riesgo de lesión por carga mejor establecido en la literatura. >1.5 se asocia a mayor
+  riesgo de lesión de tejido blando; <0.8 puede indicar un descenso brusco de carga (relevante para
+  destrenamiento, no solo para exceso de carga). Si "acwrHistorialInsuficiente" es true, dilo
+  explícitamente y trata el ACWR como una referencia preliminar, no como un dato firme — el cálculo
+  necesita ~28 días de historial para ser confiable.
+- Desaceleraciones de alta intensidad son mecánicamente más demandantes que las aceleraciones —
+  se han vinculado a mayor riesgo de isquiotibiales/rodilla. Compara el conteo de aceleraciones vs
+  desaceleraciones: un desbalance marcado (muchas más desaceleraciones) es relevante para riesgo,
+  no solo el volumen total.
+- Player Load por minuto (intensidad de la sesión) es más informativo que el Player Load total para
+  comparar sesiones de duración distinta — una sesión corta muy intensa no es lo mismo que una larga
+  y suave, aunque el Player Load total sea similar.
 - Distancia total y distancia a alta velocidad (HSR): picos agudos de carga muy por encima de la
-  carga crónica (ratio agudo:crónico >1.5) se asocian con mayor riesgo de lesión de tejido blando
-  (Gabbett, 2016).
+  carga crónica se asocian con mayor riesgo de lesión de tejido blando (ver ACWR arriba).
 - Caídas abruptas de velocidad máxima o de distancia HSR respecto al patrón habitual del atleta
   pueden reflejar fatiga, dolor no reportado, o riesgo de lesión muscular incipiente.
 """,
