@@ -12,8 +12,10 @@ dentro de las cajas que tú (o la plantilla guardada) ya definieron.
 
 import io
 import os
+import tempfile
 import numpy as np
-import flyr
+import flirimageextractor
+import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from anthropic import Anthropic
@@ -64,12 +66,20 @@ def extract():
 
     image_bytes = request.files["image"].read()
 
+    tmp_path = None
     try:
-        thermogram = flyr.unpack(io.BytesIO(image_bytes))
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
+            tmp.write(image_bytes)
+            tmp_path = tmp.name
+
+        flir = flirimageextractor.FlirImageExtractor()
+        flir.process_image(tmp_path)
+        celsius = flir.get_thermal_np()  # matriz numpy de temperaturas en Celsius
     except Exception as e:
         return jsonify({"error": f"No se pudo leer datos térmicos de esta imagen: {e}"}), 422
-
-    celsius = thermogram.celsius  # matriz numpy de temperaturas, una por píxel
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.remove(tmp_path)
     height, width = celsius.shape
 
     results = []
@@ -324,6 +334,47 @@ def report():
         return jsonify({"error": "El modelo no devolvió texto (respuesta vacía) — intenta de nuevo"}), 502
 
     return jsonify({"text": text})
+
+
+# ============================================================
+# Contacto de soporte — envía un correo real a la bandeja del
+# administrador vía Resend, con lo que la persona escribió desde
+# VIXTA. No se guarda nada en base de datos, solo se envía.
+# ============================================================
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
+SUPPORT_EMAIL_TO = os.environ.get("SUPPORT_EMAIL_TO", "frankcastro.fisioterapia@gmail.com")
+
+
+@app.route("/support-message", methods=["POST"])
+def support_message():
+    body = request.get_json(silent=True) or {}
+    message = (body.get("message") or "").strip()
+    user_email = body.get("userEmail", "desconocido")
+    org_name = body.get("orgName", "")
+
+    if not message:
+        return jsonify({"error": "El mensaje no puede estar vacío"}), 400
+    if not RESEND_API_KEY:
+        return jsonify({"error": "Falta configurar RESEND_API_KEY en el servidor"}), 500
+
+    try:
+        resp = requests.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
+            json={
+                "from": "VIXTA Soporte <onboarding@resend.dev>",
+                "to": [SUPPORT_EMAIL_TO],
+                "subject": f"Nuevo mensaje de soporte — {org_name or user_email}",
+                "text": f"De: {user_email}\nClub: {org_name or '(sin nombre)'}\n\nMensaje:\n{message}",
+            },
+            timeout=15,
+        )
+        if resp.status_code >= 300:
+            return jsonify({"error": f"Resend devolvió un error ({resp.status_code}): {resp.text}"}), 502
+    except Exception as e:
+        return jsonify({"error": f"No se pudo enviar el mensaje: {e}"}), 502
+
+    return jsonify({"ok": True})
 
 
 if __name__ == "__main__":
