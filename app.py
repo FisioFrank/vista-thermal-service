@@ -198,12 +198,27 @@ def extract():
             results.append({"id": box.get("id"), "error": "caja fuera de rango"})
             continue
         region = celsius[y0:y1, x0:x1]
+        shape = box.get("shape", "rect")
+        if shape in ("circle", "ellipse", "oval"):
+            # Máscara elíptica inscrita en la caja — solo mide los píxeles
+            # que caen dentro de la forma real, no todo el rectángulo.
+            h, w = region.shape
+            cy, cx = h / 2, w / 2
+            ry, rx = max(h / 2, 1e-6), max(w / 2, 1e-6)
+            yy, xx = np.ogrid[:h, :w]
+            mask = ((xx - cx) / rx) ** 2 + ((yy - cy) / ry) ** 2 <= 1
+            values = region[mask]
+        else:
+            values = region
+        if values.size == 0:
+            results.append({"id": box.get("id"), "error": "zona demasiado pequeña"})
+            continue
         results.append(
             {
                 "id": box.get("id"),
-                "mean": round(float(np.mean(region)), 2),
-                "min": round(float(np.min(region)), 2),
-                "max": round(float(np.max(region)), 2),
+                "mean": round(float(np.mean(values)), 2),
+                "min": round(float(np.min(values)), 2),
+                "max": round(float(np.max(values)), 2),
             }
         )
 
