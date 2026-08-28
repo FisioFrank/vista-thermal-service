@@ -69,7 +69,26 @@ def debug_exif():
             if isinstance(v, str) and len(v) > 200:
                 relevant[k] = f"(binario, {len(v)} caracteres)"
 
-        return jsonify({"total_de_campos": len(data), "campos_relevantes": relevant})
+        # Extrae el dato térmico crudo directamente (sin flirimageextractor de por medio)
+        # y revisa qué es de verdad, para diagnosticar el formato exacto.
+        raw_result = subprocess.run(
+            ["exiftool", "-b", "-RawThermalImage", tmp_path],
+            capture_output=True,
+            timeout=30,
+        )
+        raw_bytes = raw_result.stdout
+        raw_info = {"bytes_extraidos": len(raw_bytes), "primeros_bytes_hex": raw_bytes[:16].hex() if raw_bytes else None}
+        try:
+            from PIL import Image
+
+            img = Image.open(io.BytesIO(raw_bytes))
+            raw_info["formato_detectado_por_PIL"] = img.format
+            raw_info["modo"] = img.mode
+            raw_info["tamano"] = img.size
+        except Exception as e:
+            raw_info["error_al_abrir_con_PIL"] = str(e)
+
+        return jsonify({"total_de_campos": len(data), "campos_relevantes": relevant, "dato_crudo": raw_info})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     finally:
