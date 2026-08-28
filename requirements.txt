@@ -1,7 +1,9 @@
 Flask==3.0.3
 flask-cors==4.0.1
-flyr==3.2.0
+flirimageextractor
+matplotlib
 numpy==1.26.4
 Pillow==10.4.0
 gunicorn==22.0.0
 anthropic
+requests
