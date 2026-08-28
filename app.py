@@ -16,7 +16,8 @@ import json as json_lib
 import subprocess
 import tempfile
 import numpy as np
-import flirimageextractor
+import pillow_jpls  # registra el códec JPEG-LS en Pillow — necesario para leer el térmico crudo de FLIR
+from PIL import Image
 import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -96,6 +97,47 @@ def debug_exif():
             os.remove(tmp_path)
 
 
+def _exiftool_value(tmp_path, tag):
+    """Lee un solo tag numérico de exiftool para esta foto (ej. PlanckR1)."""
+    result = subprocess.run(["exiftool", f"-{tag}", "-s3", tmp_path], capture_output=True, text=True, timeout=30)
+    val = result.stdout.strip()
+    if not val:
+        raise ValueError(f"La foto no tiene el campo '{tag}' — puede que no sea una foto FLIR radiométrica.")
+    # Algunos campos vienen como "20.0 C" — nos quedamos solo con el número.
+    num = "".join(c for c in val if c.isdigit() or c in ".-")
+    return float(num)
+
+
+def decode_flir_celsius(tmp_path):
+    """
+    Extrae la temperatura real de una foto FLIR (probado con FLIR C5, que guarda
+    el dato crudo como JPEG-LS — un formato que Pillow no lee sin el plugin
+    pillow_jpls). Aplica la fórmula radiométrica de Planck con las constantes de
+    calibración propias de CADA foto (no son valores fijos, vienen en sus metadatos).
+    """
+    raw_result = subprocess.run(["exiftool", "-b", "-RawThermalImage", tmp_path], capture_output=True, timeout=30)
+    raw_bytes = raw_result.stdout
+    if not raw_bytes:
+        raise ValueError("Esta foto no tiene datos térmicos crudos embebidos (RawThermalImage vacío).")
+
+    img = Image.open(io.BytesIO(raw_bytes))
+    raw = np.array(img).astype(np.float64)
+
+    planck_r1 = _exiftool_value(tmp_path, "PlanckR1")
+    planck_r2 = _exiftool_value(tmp_path, "PlanckR2")
+    planck_b = _exiftool_value(tmp_path, "PlanckB")
+    planck_f = _exiftool_value(tmp_path, "PlanckF")
+    planck_o = _exiftool_value(tmp_path, "PlanckO")
+    emissivity = _exiftool_value(tmp_path, "Emissivity")
+    reflected_c = _exiftool_value(tmp_path, "ReflectedApparentTemperature")
+
+    reflected_k = reflected_c + 273.15
+    raw_refl = planck_r1 / (planck_r2 * (np.exp(planck_b / reflected_k) - planck_f)) - planck_o
+    raw_obj = (raw - (1 - emissivity) * raw_refl) / emissivity
+    temp_k = planck_b / np.log(planck_r1 / (planck_r2 * (raw_obj + planck_o)) + planck_f)
+    return temp_k - 273.15
+
+
 @app.route("/extract", methods=["POST"])
 def extract():
     """
@@ -135,9 +177,7 @@ def extract():
             tmp.write(image_bytes)
             tmp_path = tmp.name
 
-        flir = flirimageextractor.FlirImageExtractor()
-        flir.process_image(tmp_path)
-        celsius = flir.get_thermal_np()  # matriz numpy de temperaturas en Celsius
+        celsius = decode_flir_celsius(tmp_path)
     except Exception as e:
         return jsonify({"error": f"No se pudo leer datos térmicos de esta imagen: {e}"}), 422
     finally:
