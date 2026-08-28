@@ -12,6 +12,8 @@ dentro de las cajas que tú (o la plantilla guardada) ya definieron.
 
 import io
 import os
+import json as json_lib
+import subprocess
 import tempfile
 import numpy as np
 import flirimageextractor
@@ -31,6 +33,48 @@ REPORT_MODEL = "claude-sonnet-5"
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({"status": "ok"})
+
+
+@app.route("/debug-exif", methods=["POST"])
+def debug_exif():
+    """
+    Diagnóstico: recibe una foto y devuelve los metadatos EXIF relevantes
+    (los que tienen que ver con datos térmicos FLIR), para entender cómo
+    esta cámara específica guarda su información antes de intentar decodificarla.
+    """
+    if "image" not in request.files:
+        return jsonify({"error": "falta el archivo 'image'"}), 400
+
+    image_bytes = request.files["image"].read()
+    tmp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
+            tmp.write(image_bytes)
+            tmp_path = tmp.name
+
+        result = subprocess.run(
+            ["exiftool", "-j", "-G", tmp_path],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if result.returncode != 0:
+            return jsonify({"error": f"exiftool falló: {result.stderr}"}), 500
+
+        data = json_lib.loads(result.stdout)[0]
+        relevant_terms = ["Thermal", "Planck", "Emissivity", "Camera", "Raw", "Atmospheric", "Object", "Reflected", "IR", "Model"]
+        relevant = {k: v for k, v in data.items() if any(term in k for term in relevant_terms)}
+        # Los valores binarios crudos son enormes — los resumimos en vez de mandarlos completos.
+        for k, v in list(relevant.items()):
+            if isinstance(v, str) and len(v) > 200:
+                relevant[k] = f"(binario, {len(v)} caracteres)"
+
+        return jsonify({"total_de_campos": len(data), "campos_relevantes": relevant})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.remove(tmp_path)
 
 
 @app.route("/extract", methods=["POST"])
