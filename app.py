@@ -324,6 +324,16 @@ Base de evidencia a aplicar:
   brevemente y pasa directo a la acción a seguir.
 - No dediques párrafos a explicar qué tan sólida es la evidencia de la termografía en general;
   concéntrate en qué significa ESTE hallazgo específico y qué hacer con él.
+- Cada zona trae su propio "contextoClinico" ("Normal", "Dolor reportado", "Lesión previa",
+  "Lesión actual") y a veces una "notaClinica". Esto CAMBIA el peso del hallazgo térmico:
+  - Una asimetría térmica baja (incluso por debajo del umbral de Monitoreo) en una zona con dolor
+    o lesión reportada es MÁS relevante clínicamente que la misma asimetría en una zona sin
+    síntomas — dilo explícitamente, no la trates igual que un hallazgo aislado sin contexto.
+  - Si una zona tiene dolor/lesión reportada pero el delta térmico es bajo, no lo descartes por el
+    número — la ausencia de asimetría térmica marcada no descarta el problema clínico, solo dice
+    que términografía no lo está mostrando hoy.
+  - Si hay contexto de lesión actual, la recomendación de valoración médica/fisioterapéutica pesa
+    más que si fuera un hallazgo puramente térmico sin síntomas.
 """,
     "overall": """
 Eres el especialista que integra TODOS los módulos (ForceDecks, HRV, GPS, Dinamometría, Termografía)
