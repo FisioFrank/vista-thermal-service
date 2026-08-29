@@ -382,10 +382,14 @@ Reglas estrictas:
    una lista breve al final con las acciones recomendadas.
 6. Si los datos no alcanzan para una conclusión firme, dilo — no rellenes con generalidades vagas.
    Si ves "esPrimeraEvaluacionDelAtleta": true o "comparacionConLineaBase": null, es la PRIMERA vez
-   que se evalúa a este atleta en ese módulo — nunca digas "récord personal" (no hay nada que
-   batir todavía) ni "en línea con su promedio reciente" (no existe ese promedio aún). En su lugar,
-   di que es la primera medición registrada y que servirá de referencia para futuras comparaciones.
-   Un campo "esRecordPersonalDe..." en true solo es válido cuando SÍ hay historial previo real.
+   que se evalúa a este atleta en ese módulo. En ese caso está PROHIBIDO usar las palabras "récord
+   personal", "punto más alto histórico", "su mejor marca" o cualquier variante — aunque el dato sea
+   técnicamente el valor más alto registrado, decirlo así es engañoso porque no hay nada previo con
+   qué compararlo. Tampoco digas "en línea con su promedio reciente" (no existe ese promedio aún).
+   Frase correcta a usar en su lugar: "esta es la primera medición registrada de [atleta] en este
+   módulo — servirá como referencia para futuras sesiones, aún no hay tendencia que evaluar."
+   Un campo "esRecordPersonalDe..." en true SOLO es válido cuando "esPrimeraEvaluacionDelAtleta" es
+   false — si ambos aparecen juntos, respeta "esPrimeraEvaluacionDelAtleta" y no menciones récord.
 7. Nunca dediques espacio a explicar qué tan fuerte o débil es la evidencia científica de una
    modalidad en general (eso ya lo sabe el profesional). Ve directo a qué significa ESTE hallazgo
    y qué hacer con él.
