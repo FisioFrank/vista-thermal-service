@@ -471,7 +471,7 @@ def report():
         )
 
     try:
-        text = call_claude_report(evidence, user_prompt, max_tokens=3000 if module == "overall" else 2500)
+        text = call_claude_report(evidence, user_prompt, max_tokens=5000 if module == "overall" else 2500)
     except Exception as e:
         return jsonify({"error": f"No se pudo generar el informe: {e}"}), 502
 
