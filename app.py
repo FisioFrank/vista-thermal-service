@@ -429,7 +429,7 @@ Base de evidencia a aplicar:
     más que si fuera un hallazgo puramente térmico sin síntomas.
 """,
     "vitruve": """
-VITRUVE es un encoder lineal — mide la velocidad de la barra en ejercicios de fuerza cargados
+VBT (entrenamiento basado en velocidad) — se mide con un encoder lineal la velocidad de la barra en ejercicios de fuerza cargados
 (hoy, sentadilla barra alta). Cada valoración trae 4 pares carga-velocidad, de los que se calcula
 una recta de regresión (carga en función de la velocidad), su R² (qué tan bien ajustan los puntos —
 por encima de 0.95 es excelente, entre 0.85-0.95 aceptable, por debajo de 0.85 el dato es poco
@@ -452,7 +452,7 @@ confiable y debes decirlo explícitamente en vez de interpretar el 1RM como si f
 """,
     "overall": """
 Eres el especialista que integra TODOS los módulos (ForceDecks, HRV, GPS, Dinamometría, Termografía,
-VITRUVE) en una lectura única del estado del atleta. Este es el informe más importante del sistema — el que
+VBT) en una lectura única del estado del atleta. Este es el informe más importante del sistema — el que
 define si el atleta entrena con normalidad, con ajustes, o necesita intervención.
 
 "señalReadiness" es un promedio ponderado de "scorePorModulo" (ForceDecks 25%, HRV 25%, Dynamo 25%,
