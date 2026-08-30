@@ -232,6 +232,80 @@ def extract():
 # INTERPRETACIÓN, no los números crudos.
 # ============================================================
 
+# Guía de qué TIPO de intervención corresponde a cada módulo — para que el
+# plan de intervención sea una prescripción concreta (ejercicios y protocolos
+# nombrados), no un resumen de hallazgos con recomendaciones genéricas. Esto es
+# DISTINTO de MODULE_EVIDENCE: MODULE_EVIDENCE ayuda a INTERPRETAR el dato,
+# esto ayuda a decidir QUÉ HACER al respecto, con nombre propio.
+MODULE_INTERVENTION_GUIDANCE = {
+    "jump": """
+El plan debe apuntar a la asimetría o el déficit específico encontrado — no repitas el hallazgo,
+prescribe. Según lo que aparezca:
+- Asimetría de impulso concéntrico o de aterrizaje → trabajo unilateral excéntrico controlado en el
+  lado más débil (sentadilla búlgara con énfasis excéntrico, RDL a una pierna), drills de mecánica de
+  aterrizaje (drop landings enfocados en control, no en altura), progresión pliométrica priorizando el
+  lado débil antes de igualar volumen entre ambos.
+- RSI-mod bajo relativo a la altura → trabajo de ciclo estiramiento-acortamiento de contacto corto
+  (pogo jumps, saltos con tiempo de contacto objetivo), en vez de solo trabajo de fuerza máxima.
+- Sin hallazgos relevantes → mantener el estímulo actual, no inventes una intervención que no hace falta.
+""",
+    "hrv": """
+Esto es recuperación autonómica, NO fuerza — el plan no debe incluir ejercicios de fuerza como
+respuesta a un HRV bajo. Enfócate en:
+- Respiración de frecuencia de resonancia (~6 respiraciones/min, 5-10 min, ideal antes de dormir)
+- Reducir temporalmente volumen/intensidad de entrenamiento en los próximos 1-3 días
+- Higiene de sueño (horario consistente, reducir pantallas antes de dormir)
+- Trabajo aeróbico ligero de recuperación activa en vez de sesiones de alta intensidad
+- Si el patrón es sostenido (no solo el día de hoy), señalar la necesidad de revisar factores de
+  estrés externos (carga académica/laboral, sueño, nutrición) con el atleta directamente.
+""",
+    "force": """
+Prescribe ejercicios específicos para el grupo muscular y el tipo de déficit (fuerza máxima vs. RFD)
+que aparezca en los datos — nombra el ejercicio, no digas solo "trabajo de fuerza":
+- Cuádriceps: extensión de rodilla unilateral, sentadilla búlgara con énfasis en el lado débil,
+  isométricos en múltiples ángulos de rodilla (wall sit a 90°/120°/150°).
+- Isquiotibial, especialmente si el déficit es de RFD (no solo fuerza máxima): nordic hamstring curl,
+  exposición progresiva a sprint (RFD es velocidad de producción de fuerza — se entrena rápido, no
+  solo pesado), kettlebell swing para potencia de cadera.
+- Glúteo: hip thrust unilateral, marcha lateral con banda, puente de glúteo con pausa isométrica.
+- Rotadores de cadera: rotación interna/externa con banda en cadena cerrada, clamshell con banda,
+  rotación de cadera con cable de pie.
+- Si el ratio isquiotibial/cuádriceps o el ratio rotador interno/externo está desbalanceado (no solo
+  la asimetría lado a lado), el plan debe apuntar a corregir ESE ratio, no solo igualar los lados.
+""",
+    "gps": """
+Esto es manejo de carga externa, no ejercicios de gimnasio. El plan debe hablar de estructura de la
+semana de entrenamiento: si el ACWR está alto, reducir volumen de distancia de alta velocidad o
+sprints en los próximos días manteniendo la frecuencia de estímulo; si está bajo o el historial es
+insuficiente, decir explícitamente que aún no hay base para recomendar un ajuste de carga.
+""",
+    "thermal": """
+El plan debe apuntar a la zona específica marcada, no ser genérico:
+- Activación/calentamiento específico de esa zona antes de entrenar (activación del grupo muscular
+  correspondiente, no un calentamiento general)
+- Trabajo de tejido blando en esa zona (rodillo de espuma, liberación miofascial) si el contexto
+  clínico sugiere tensión o sobrecarga
+- Si hay dolor o lesión reportada en esa misma zona, la prioridad es esa nota clínica, no el número
+  térmico — prescribe en función del cuadro clínico completo, no solo del grado.
+- Sugerir repetir la termografía en la próxima sesión para confirmar si el hallazgo se mantiene.
+""",
+    "vitruve": """
+El plan es sobre autorregulación de carga en el ejercicio evaluado, no ejercicios nuevos:
+- Si el 1RM estimado subió o se mantuvo: se puede seguir progresando la carga con normalidad.
+- Si el 1RM estimado bajó de forma relevante: sugerir un ajuste temporal del %1RM de trabajo basado
+  en velocidad (trabajar en la zona de velocidad correspondiente al objetivo del bloque, no al
+  1RM antiguo), y considerar si amerita una semana de descarga.
+- Si el R² fue bajo, decir explícitamente que conviene repetir la valoración con más cuidado en la
+  técnica antes de tomar decisiones de carga basadas en este resultado.
+""",
+    "overall": """
+Con varios módulos en juego, PRIORIZA — no listes una intervención por módulo por separado. Si hay
+convergencia entre módulos (ej. mismo lado, misma zona, mismo grupo muscular en más de un hallazgo),
+esa es la prioridad #1 del plan. Da una lista corta (3-5 acciones) ordenada por prioridad, no una
+por módulo.
+""",
+}
+
 MODULE_EVIDENCE = {
     "jump": """
 Eres un especialista en ciencias del deporte interpretando datos de ForceDecks (CMJ y Drop Jump).
@@ -482,14 +556,18 @@ def report():
             "las reglas del sistema. 3-5 párrafos cortos como máximo."
         )
     else:
+        intervention_guidance = MODULE_INTERVENTION_GUIDANCE.get(module, "")
+        evidence = evidence + "\n\nGUÍA DE INTERVENCIÓN PARA ESTE MÓDULO:\n" + intervention_guidance
         user_prompt = (
             f"Atleta: {athlete_name}\n"
             f"Módulo o vista: {module}\n"
             f"Datos calculados (JSON):\n{data}\n\n"
-            "Basándote en estos hallazgos, redacta un plan de intervención/entrenamiento concreto y "
-            "accionable: qué ajustar en la carga de entrenamiento, qué trabajar en readaptación o "
-            "prevención, con qué frecuencia volver a monitorear, y si amerita derivar a valoración "
-            "médica. Cierra con una lista breve de 3-6 acciones concretas, priorizadas."
+            "Esto es un PLAN DE INTERVENCIÓN, no un informe de análisis — no repitas la interpretación "
+            "de los números (eso ya está en el informe aparte). Ve directo a QUÉ HACER: ejercicios o "
+            "protocolos concretos, nombrados, siguiendo la guía de intervención de este módulo que se "
+            "te dio en las instrucciones del sistema. Sé específico (nombre del ejercicio, no "
+            "categoría genérica como 'trabajo de fuerza'). Cierra con una lista de 3-6 acciones "
+            "concretas y priorizadas."
         )
 
     try:
