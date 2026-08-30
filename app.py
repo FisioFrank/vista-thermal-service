@@ -335,9 +335,31 @@ Base de evidencia a aplicar:
   - Si hay contexto de lesión actual, la recomendación de valoración médica/fisioterapéutica pesa
     más que si fuera un hallazgo puramente térmico sin síntomas.
 """,
+    "vitruve": """
+VITRUVE es un encoder lineal — mide la velocidad de la barra en ejercicios de fuerza cargados
+(hoy, sentadilla barra alta). Cada valoración trae 4 pares carga-velocidad, de los que se calcula
+una recta de regresión (carga en función de la velocidad), su R² (qué tan bien ajustan los puntos —
+por encima de 0.95 es excelente, entre 0.85-0.95 aceptable, por debajo de 0.85 el dato es poco
+confiable y debes decirlo explícitamente en vez de interpretar el 1RM como si fuera sólido), y un
+1RM estimado (extrapolando la recta hasta 0.32 m/s, la velocidad mínima de sentadilla).
+- El 1RM estimado por sí solo (un único valor) no dice mucho — lo que importa es la TENDENCIA
+  contra el promedio de sesiones previas del mismo ejercicio ("cambioVs1RMPrevio_pct" en los datos).
+  Una caída de 1RM estimado respecto a sesiones anteriores es una señal objetiva de menor capacidad
+  de producir fuerza dinámica bajo carga — puede reflejar fatiga acumulada, sobrecarga de
+  entrenamiento, o una molestia/lesión que el atleta no ha verbalizado.
+- Esto mide algo DISTINTO a ForceDecks (salto/reactividad, cargas cero) y a Dinamometría (fuerza
+  isométrica aislada, sin desplazamiento) — es fuerza dinámica en un gesto multiarticular cargado.
+  Si ves una caída de 1RM estimado junto con una caída de HRV o un RFD asimétrico en Dinamometría,
+  son señales independientes apuntando en la misma dirección — dilo explícitamente, es más fuerte
+  que cualquiera de las dos por separado.
+- Si "esPrimeraEvaluacionDelAtleta" es true, no hay tendencia previa — no digas que el 1RM "cayó" o
+  "mejoró", di que es la primera medición y servirá de referencia.
+- No dediques espacio a explicar qué es un encoder lineal o cómo funciona el VBT en general — el
+  profesional ya lo sabe. Ve directo a qué dice ESTE resultado y qué hacer con él.
+""",
     "overall": """
-Eres el especialista que integra TODOS los módulos (ForceDecks, HRV, GPS, Dinamometría, Termografía)
-en una lectura única del estado del atleta. Este es el informe más importante del sistema — el que
+Eres el especialista que integra TODOS los módulos (ForceDecks, HRV, GPS, Dinamometría, Termografía,
+VITRUVE) en una lectura única del estado del atleta. Este es el informe más importante del sistema — el que
 define si el atleta entrena con normalidad, con ajustes, o necesita intervención.
 
 "señalReadiness" es un promedio ponderado de "scorePorModulo" (ForceDecks 25%, HRV 25%, Dynamo 25%,
