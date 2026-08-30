@@ -238,6 +238,25 @@ def extract():
 # DISTINTO de MODULE_EVIDENCE: MODULE_EVIDENCE ayuda a INTERPRETAR el dato,
 # esto ayuda a decidir QUÉ HACER al respecto, con nombre propio.
 MODULE_INTERVENTION_GUIDANCE = {
+    "_general": """
+Principios generales de selección de ejercicios para CUALQUIER plan de intervención (aplica encima
+de la guía específica del módulo):
+- Trabajo de tronco/core: clasifícalo en 3 categorías según qué fuerza debe resistir el core, y usa
+  la que corresponda al hallazgo — anti-rotación (ej. pallof press, chop/lift con cable) para control
+  rotacional; anti-extensión (ej. plancha frontal, rollout) para control de la zona lumbar bajo carga
+  axial; anti-flexión lateral (ej. plancha lateral, suitcase carry) para control frente a fuerzas
+  laterales asimétricas. Nómbralas como lo que hacen ("ejercicio anti-rotación", "control anti-flexión
+  lateral"), sin atribuir esto a ningún método o autor externo.
+- Calidad de movimiento: cuando el hallazgo sugiera una limitación de movilidad o control motor de
+  base (no solo fuerza/asimetría numérica) — por ejemplo cadera, tobillo, o estabilidad de tronco en
+  movimiento — puedes sugerir trabajo correctivo de movilidad/control en esa articulación específica
+  antes de progresar carga ahí, sin nombrar ningún protocolo de evaluación de movimiento externo.
+- Balance de patrones de empuje/tracción: si el plan incluye ejercicios de fuerza del tren superior,
+  procura que haya equilibrio entre empuje y tracción, y entre los planos vertical (press de hombro,
+  dominada), horizontal (press de banca, remo) y frontal/frontal-transverso (aducción/abducción de
+  hombro, patrones rotacionales de tronco) — no receta solo empujes o solo tracciones. No nombres
+  ningún método de entrenamiento externo al mencionar esto, solo aplica el criterio.
+""",
     "jump": """
 El plan debe apuntar a la asimetría o el déficit específico encontrado — no repitas el hallazgo,
 prescribe. Según lo que aparezca:
@@ -480,8 +499,10 @@ Reglas estrictas:
    pero no diagnostiques tú.
 4. Tono: profesional, directo, sin relleno. Un profesional ocupado debe poder leer esto en 30-45
    segundos y saber qué hacer.
-5. Responde en español, sin encabezados markdown tipo "##" — usa párrafos cortos y, si ayuda,
-   una lista breve al final con las acciones recomendadas.
+5. Responde en español, sin encabezados markdown tipo "##" — usa párrafos cortos. El análisis de
+   módulo (interpretación) NUNCA debe cerrar con una lista de acciones recomendadas — eso vive
+   exclusivamente en el plan de intervención, que es un documento aparte. Quédate en interpretar
+   qué significa el dato, no en qué hacer al respecto.
 6. Si los datos no alcanzan para una conclusión firme, dilo — no rellenes con generalidades vagas.
    Si ves "esPrimeraEvaluacionDelAtleta": true o "comparacionConLineaBase": null, es la PRIMERA vez
    que se evalúa a este atleta en ese módulo. En ese caso está PROHIBIDO usar las palabras "récord
@@ -556,7 +577,7 @@ def report():
             "las reglas del sistema. 3-5 párrafos cortos como máximo."
         )
     else:
-        intervention_guidance = MODULE_INTERVENTION_GUIDANCE.get(module, "")
+        intervention_guidance = MODULE_INTERVENTION_GUIDANCE["_general"] + "\n" + MODULE_INTERVENTION_GUIDANCE.get(module, "")
         evidence = evidence + "\n\nGUÍA DE INTERVENCIÓN PARA ESTE MÓDULO:\n" + intervention_guidance
         user_prompt = (
             f"Atleta: {athlete_name}\n"
