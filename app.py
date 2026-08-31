@@ -499,10 +499,15 @@ Reglas estrictas:
    pero no diagnostiques tú.
 4. Tono: profesional, directo, sin relleno. Un profesional ocupado debe poder leer esto en 30-45
    segundos y saber qué hacer.
-5. Responde en español, sin encabezados markdown tipo "##" — usa párrafos cortos. El análisis de
-   módulo (interpretación) NUNCA debe cerrar con una lista de acciones recomendadas — eso vive
-   exclusivamente en el plan de intervención, que es un documento aparte. Quédate en interpretar
-   qué significa el dato, no en qué hacer al respecto.
+5. Responde en español, sin encabezados markdown tipo "##" — usa párrafos cortos.
+   PROHIBIDO en el análisis de módulo: terminar con una lista de "Acciones recomendadas",
+   "Recomendaciones", "Próximos pasos" o cualquier variante — ni siquiera una lista corta de 1-2
+   ítems. El análisis interpreta qué significa el dato; el QUÉ HACER vive exclusivamente en el plan
+   de intervención, un documento aparte que el profesional pide por separado. Si sientes el impulso
+   de cerrar con una lista de acciones, es la señal de que debes parar antes de escribirla — termina
+   el párrafo de interpretación y ya. Ejemplo de cierre PROHIBIDO: "Acciones recomendadas: - Repetir
+   el testeo en próximas sesiones. - No se requiere intervención clínica." Ese tipo de cierre no debe
+   aparecer nunca en un análisis, sin excepción.
 6. Si los datos no alcanzan para una conclusión firme, dilo — no rellenes con generalidades vagas.
    Si ves "esPrimeraEvaluacionDelAtleta": true o "comparacionConLineaBase": null, es la PRIMERA vez
    que se evalúa a este atleta en ese módulo. En ese caso está PROHIBIDO usar las palabras "récord
@@ -583,16 +588,19 @@ def report():
             f"Atleta: {athlete_name}\n"
             f"Módulo o vista: {module}\n"
             f"Datos calculados (JSON):\n{data}\n\n"
-            "Esto es un PLAN DE INTERVENCIÓN, no un informe de análisis — no repitas la interpretación "
-            "de los números (eso ya está en el informe aparte). Ve directo a QUÉ HACER: ejercicios o "
-            "protocolos concretos, nombrados, siguiendo la guía de intervención de este módulo que se "
-            "te dio en las instrucciones del sistema. Sé específico (nombre del ejercicio, no "
-            "categoría genérica como 'trabajo de fuerza'). Cierra con una lista de 3-6 acciones "
-            "concretas y priorizadas."
+            "Esto es un PLAN DE INTERVENCIÓN — el profesional YA leyó el análisis interpretativo aparte, "
+            "no necesita que se lo repitas. Tu respuesta debe ser ÚNICAMENTE una lista numerada de "
+            "acciones/ejercicios concretos, nombrados, siguiendo la guía de intervención de este módulo "
+            "que se te dio en las instrucciones del sistema. PROHIBIDO: ningún párrafo introductorio, "
+            "ningún resumen de hallazgos ('esta es la primera evaluación...', 'el ratio está en...', "
+            "'las asimetrías están dentro de rango...'), ninguna explicación antes de la lista — eso ya "
+            "está en el análisis, repetirlo aquí es exactamente lo que no debes hacer. Empieza tu "
+            "respuesta directamente con \"1.\" — nada de texto antes. Sé específico (nombre del "
+            "ejercicio, no categoría genérica como 'trabajo de fuerza'). 3-6 acciones, priorizadas."
         )
 
     try:
-        text = call_claude_report(evidence, user_prompt, max_tokens=5000 if module == "overall" else 2500)
+        text = call_claude_report(evidence, user_prompt, max_tokens=5000 if module == "overall" else 4000)
     except Exception as e:
         return jsonify({"error": f"No se pudo generar el informe: {e}"}), 502
 
