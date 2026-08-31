@@ -601,7 +601,7 @@ def report():
         )
 
     try:
-        text = call_claude_report(evidence, user_prompt, max_tokens=5000 if module == "overall" else 4000)
+        text = call_claude_report(evidence, user_prompt, max_tokens=5000 if module == "overall" else 5500)
     except Exception as e:
         return jsonify({"error": f"No se pudo generar el informe: {e}"}), 502
 
@@ -620,9 +620,11 @@ def report():
         if stripped:  # nunca dejar el texto vacío por un recorte de más
             text = stripped
     elif report_type == "intervention_plan":
-        m = re.search(r"(?:^|\n)\s*1[.\)]\s", text)
+        m = re.search(r"(?:^|[\s:])1[.\)]\s+\S", text)
         if m and text[m.start():].strip():
-            text = text[m.start():].lstrip("\n ")
+            # nos quedamos desde el "1" en adelante, sin el espacio/símbolo previo capturado
+            start = text.index("1", m.start())
+            text = text[start:].lstrip("\n ")
 
     return jsonify({"text": text})
 
