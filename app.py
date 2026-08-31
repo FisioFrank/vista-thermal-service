@@ -12,6 +12,7 @@ dentro de las cajas que tú (o la plantilla guardada) ya definieron.
 
 import io
 import os
+import re
 import json as json_lib
 import subprocess
 import tempfile
@@ -606,6 +607,22 @@ def report():
 
     if not text or not text.strip():
         return jsonify({"error": "El modelo no devolvió texto (respuesta vacía) — intenta de nuevo"}), 502
+
+    # Respaldo determinístico: si el modelo no siguió la instrucción al pie de la
+    # letra, lo corregimos aquí — no depende de que el modelo "se acuerde" cada vez.
+    if report_type == "module_analysis":
+        stripped = re.sub(
+            r"\n\s*(Acciones recomendadas|Recomendaciones|Próximos pasos)\s*:?.*$",
+            "",
+            text,
+            flags=re.IGNORECASE | re.DOTALL,
+        ).strip()
+        if stripped:  # nunca dejar el texto vacío por un recorte de más
+            text = stripped
+    elif report_type == "intervention_plan":
+        m = re.search(r"(?:^|\n)\s*1[.\)]\s", text)
+        if m and text[m.start():].strip():
+            text = text[m.start():].lstrip("\n ")
 
     return jsonify({"text": text})
 
