@@ -34,7 +34,7 @@ REPORT_MODEL = "claude-sonnet-5"
 
 @app.route("/health", methods=["GET"])
 def health():
-    return jsonify({"status": "ok"})
+    return jsonify({"status": "ok", "version": "vbt-fix-2026-08-31-v3", "modules": sorted(MODULE_EVIDENCE.keys())})
 
 
 @app.route("/debug-exif", methods=["POST"])
